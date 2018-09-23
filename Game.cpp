@@ -1,7 +1,7 @@
 #include "Game.hpp"
 
 void Game::update(float time) {
-	ball += ball_velocity * time;
+/*	ball += ball_velocity * time;
 	if (ball.x >= 0.5f * FrameWidth - BallRadius) {
 		ball_velocity.x = -std::abs(ball_velocity.x);
 	}
@@ -35,5 +35,5 @@ void Game::update(float time) {
 	};
 
 	do_edge(glm::vec2(paddle.x + 0.5f * PaddleWidth, paddle.y), glm::vec2(paddle.x - 0.5f * PaddleWidth, paddle.y));
-
+*/
 }
