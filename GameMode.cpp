@@ -94,6 +94,7 @@ Load< Scene > scene(LoadTagDefault, [](){
 		if (t->name == "Calf_R") {
 			if (calfR_transform) throw std::runtime_error("Multiple 'Calf_R' transforms in scene.");
 			calfR_transform = t;
+			calfR_transform->position.x += 0.2f;
 		}
 		if (t->name == "Thigh_L") {
 			if (thighL_transform) throw std::runtime_error("Multiple 'Thigh_L' transforms in scene.");
@@ -102,6 +103,7 @@ Load< Scene > scene(LoadTagDefault, [](){
 		if (t->name == "Calf_L") {
 			if (calfL_transform) throw std::runtime_error("Multiple 'Calf_L' transforms in scene.");
 			calfL_transform = t;
+			calfL_transform->position.x += 2.0f;
 		}
 
 		}
