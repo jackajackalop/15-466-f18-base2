@@ -153,16 +153,15 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	if (evt.type == SDL_KEYDOWN|| evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.scancode == SDL_SCANCODE_Q) {
 			controls.q = (evt.type == SDL_KEYDOWN);
-			return true;
-		} else if (evt.key.keysym.scancode == SDL_SCANCODE_W) {
+		} 
+		if (evt.key.keysym.scancode == SDL_SCANCODE_W) {
 			controls.w = (evt.type == SDL_KEYDOWN);
-			return true;
-		}else if (evt.key.keysym.scancode == SDL_SCANCODE_O) {
+		}
+		if (evt.key.keysym.scancode == SDL_SCANCODE_O) {
 			controls.o = (evt.type == SDL_KEYDOWN);
-			return true;
-		} else if (evt.key.keysym.scancode == SDL_SCANCODE_P) {
+		}
+		if (evt.key.keysym.scancode == SDL_SCANCODE_P) {
 			controls.p = (evt.type == SDL_KEYDOWN);
-			return true;
 		}
 	}
 
@@ -190,18 +189,23 @@ glm::quat getQuat(float angle){
 
 
 void GameMode::update(float elapsed) {
-	if (controls.q && state.thighR_angle<90) {
+	if (controls.q && state.thighR_angle<10) {
 		state.thighR_angle+=1.0f;
 		state.thighL_angle-=1.0f;
-        }else if (controls.w && state.thighL_angle<90) {
+        }
+	if (controls.w && state.thighL_angle<10) {
 		state.thighR_angle-=1.0f;
 		state.thighL_angle+=1.0f;
-	}else if (controls.o && state.calfL_angle>-90) {
+	}
+	if (controls.o && state.calfR_angle>-20) {
 		state.calfR_angle-=1.0f;
-		state.calfL_angle+=1.0f;
-        }else if (controls.p && state.calfR_angle<90) {
-		state.calfR_angle+=1.0f;
+		if(state.calfL_angle<0)
+			state.calfL_angle+=1.0f;
+        }
+	if (controls.p && state.calfL_angle>-20) {
 		state.calfL_angle-=1.0f;
+		if(state.calfR_angle<0)
+			state.calfR_angle+=1.0f;
 	}
 
 
