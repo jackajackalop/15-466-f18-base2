@@ -1,6 +1,7 @@
 #include "Game.hpp"
 
 void Game::update(float time) {
+
 /*	ball += ball_velocity * time;
 	if (ball.x >= 0.5f * FrameWidth - BallRadius) {
 		ball_velocity.x = -std::abs(ball_velocity.x);

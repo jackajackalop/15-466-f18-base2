@@ -145,17 +145,21 @@ GameMode::~GameMode() {
 bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
 	//ignore any keys that are the result of automatic key repeat:
 	if (evt.type == SDL_KEYDOWN && evt.key.repeat) {
-		return false;
+//		return false;
 	}
 	//move duck jump angle and power
 	if (evt.type == SDL_KEYDOWN|| evt.type == SDL_KEYUP) {
-		if (evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-			state.thighL_angle += 1;
-			state.thighR_angle -= 1;
+		if (evt.key.keysym.scancode == SDL_SCANCODE_Q) {
+			controls.q = (evt.type == SDL_KEYDOWN);
 			return true;
-		} else if (evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-			state.thighR_angle += 1;
-			state.thighL_angle -= 1;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_W) {
+			controls.w = (evt.type == SDL_KEYDOWN);
+			return true;
+		}else if (evt.key.keysym.scancode == SDL_SCANCODE_O) {
+			controls.o = (evt.type == SDL_KEYDOWN);
+			return true;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_P) {
+			controls.p = (evt.type == SDL_KEYDOWN);
 			return true;
 		}
 	}
@@ -184,6 +188,21 @@ glm::quat getQuat(float angle){
 
 
 void GameMode::update(float elapsed) {
+	if (controls.q && state.thighR_angle<90) {
+		state.thighR_angle+=1.0f;
+		state.thighL_angle-=1.0f;
+        }else if (controls.w && state.thighL_angle<90) {
+		state.thighR_angle-=1.0f;
+		state.thighL_angle+=1.0f;
+	}else if (controls.o && state.calfL_angle>-90) {
+		state.calfR_angle-=1.0f;
+		state.calfL_angle+=1.0f;
+        }else if (controls.p && state.calfR_angle<90) {
+		state.calfR_angle+=1.0f;
+		state.calfL_angle-=1.0f;
+	}
+
+
 	state.update(elapsed);
 
 	if (client.connection) {
@@ -207,6 +226,11 @@ void GameMode::update(float elapsed) {
 	body_transform->position.x = state.body_pos.x;
 	body_transform->position.y = state.body_pos.y;
 	thighR_transform->rotation = getQuat(state.thighR_angle);
+	thighL_transform->rotation = getQuat(state.thighL_angle);
+	calfL_transform->rotation = getQuat(state.calfL_angle);
+	calfR_transform->rotation = getQuat(state.calfR_angle);
+	bicepR_transform->rotation = getQuat(state.thighL_angle);
+	bicepL_transform->rotation = getQuat(state.thighR_angle);
 
 	paddle_transform->position.x = state.paddle.x;
 	paddle_transform->position.y = state.paddle.y;
