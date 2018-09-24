@@ -16,6 +16,8 @@ int main(int argc, char **argv) {
     Game state1;
     Game state2;
 
+    Game temp;
+
     while (1) {
         server.poll([&](Connection *c, Connection::Event evt){
                 if (evt == Connection::OnOpen) {
@@ -25,23 +27,44 @@ int main(int argc, char **argv) {
                 c->recv_buffer.erase(c->recv_buffer.begin(),
                         c->recv_buffer.begin() + 1);
                 std::cout << c << ": Got hello." << std::endl;
-                }/*else if (c->recv_buffer[0] == 's') {
-                if (c->recv_buffer.size() < 1 + sizeof(float)) {
-                return; //wait for more data
-                } else {
-                    //TODO
-                    if(c->ID == 0){
-                        memcpy(&state1.body_pos.x, c->recv_buffer.data()+1, sizeof(float));
+                }else if (c->recv_buffer [0] == 'a'){
+                    if (c->recv_buffer.size() < 1 + sizeof(float))
+                        return; //wait for more data
+                    else{
+                        memcpy(&temp.body_pos.x, c->recv_buffer.data()+1, sizeof(float));
+                        c->recv_buffer.erase(c->recv_buffer.begin(), c->recv_buffer.begin() + 1 + sizeof(float));
+                        memcpy(&temp.body_pos.y, c->recv_buffer.data(), sizeof(float));
+                        c->recv_buffer.erase(c->recv_buffer.begin(), c->recv_buffer.begin() +  sizeof(float));
+                        memcpy(&temp.thighR_angle, c->recv_buffer.data(), sizeof(float));
+                        c->recv_buffer.erase(c->recv_buffer.begin(), c->recv_buffer.begin() +  sizeof(float));
+                        memcpy(&temp.thighL_angle, c->recv_buffer.data(), sizeof(float));
+                        c->recv_buffer.erase(c->recv_buffer.begin(), c->recv_buffer.begin() +  sizeof(float));
+                        memcpy(&temp.calfR_angle, c->recv_buffer.data(), sizeof(float));
+                        c->recv_buffer.erase(c->recv_buffer.begin(), c->recv_buffer.begin() +  sizeof(float));
+                        memcpy(&temp.calfL_angle, c->recv_buffer.data(), sizeof(float));
+                        c->recv_buffer.erase(c->recv_buffer.begin(), c->recv_buffer.begin() +  sizeof(float));
                         c->send_raw("a", 1);
-                        c->send_raw(&state2.body_pos.x, sizeof(float));
-                    }else if(c->ID ==1){
-                        memcpy(&state2.body_pos.x, c->recv_buffer.data() + 1, sizeof(float));
-                        c->send_raw("a", 1);
-                        c->send_raw(&state1.body_pos.x, sizeof(float));
+                        if(c->ID == 0){
+                            state1 = temp;
+                            c->send_raw(&state2.body_pos.x, sizeof(float));
+                            c->send_raw(&state2.body_pos.y, sizeof(float));
+                            c->send_raw(&state2.thighR_angle, sizeof(float));
+                            c->send_raw(&state2.thighL_angle, sizeof(float));
+                            c->send_raw(&state2.calfR_angle, sizeof(float));
+                            c->send_raw(&state2.calfL_angle, sizeof(float));
+                        }else{
+                            state2 = temp;
+                            c->send_raw(&state1.body_pos.x, sizeof(float));
+                            c->send_raw(&state1.body_pos.y, sizeof(float));
+                            c->send_raw(&state1.thighR_angle, sizeof(float));
+                            c->send_raw(&state1.thighL_angle, sizeof(float));
+                            c->send_raw(&state1.calfR_angle, sizeof(float));
+                            c->send_raw(&state1.calfL_angle, sizeof(float));
+                        }
+
+
                     }
-                    c->recv_buffer.erase(c->recv_buffer.begin(), c->recv_buffer.begin() + 1 + sizeof(float));
                 }
-                }*/
                 }
         }, 0.01);
         //every second or so, dump the current paddle position:

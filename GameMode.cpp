@@ -274,18 +274,13 @@ void GameMode::update(float elapsed) {
 
     if (client.connection) {
         //send game state to server:
-        //TODO
+        //TODO turns out its sending other things thats breaking it
         client.connection.send_raw("a", 1);
         client.connection.send_raw(&state.body_pos.x, sizeof(float));
-        client.connection.send_raw("b", 1);
         client.connection.send_raw(&state.body_pos.y, sizeof(float));
-        client.connection.send_raw("c", 1);
         client.connection.send_raw(&state.thighR_angle, sizeof(float));
-        client.connection.send_raw("d", 1);
         client.connection.send_raw(&state.thighL_angle, sizeof(float));
-        client.connection.send_raw("e", 1);
         client.connection.send_raw(&state.calfR_angle, sizeof(float));
-        client.connection.send_raw("f", 1);
         client.connection.send_raw(&state.calfL_angle, sizeof(float));
     }
 
@@ -297,17 +292,44 @@ void GameMode::update(float elapsed) {
             } else { assert(event == Connection::OnRecv);}
 
             if (c->recv_buffer[0] == 'a') {
-            if (c->recv_buffer.size() < 1 + sizeof(float)) {
-            return; //wait for more data
-            } else {
-            //TODO
-            memcpy(&state.body_pos2.x,
-                    c->recv_buffer.data()+1,
-                    sizeof(float));
-            c->recv_buffer.clear();
+                if (c->recv_buffer.size() < 1 + sizeof(float)) {
+                    return; //wait for more data
+                } else {
+                //TODO
+                    memcpy(&state.body_pos2.x,
+                        c->recv_buffer.data()+1,
+                        sizeof(float));
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
+                            c->recv_buffer.begin() + 1 + sizeof(float));
+                    memcpy(&state.body_pos2.y,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
+                            c->recv_buffer.begin() + sizeof(float));
+                    memcpy(&state.thighR_angle2,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
+                            c->recv_buffer.begin() + sizeof(float));
+                    memcpy(&state.thighL_angle2,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
+                            c->recv_buffer.begin() + sizeof(float));
+                    memcpy(&state.calfR_angle2,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
+                            c->recv_buffer.begin() + sizeof(float));
+                    memcpy(&state.calfL_angle2,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
+                            c->recv_buffer.begin() + sizeof(float));
+
+                }
             }
-            }
-            });
+    });
 
 
     //copy game state to scene positions:
