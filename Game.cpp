@@ -1,40 +1,44 @@
 #include "Game.hpp"
+#include <iostream>
+#include <stdio.h>
+#include <math.h>
+
+bool foot_contact(float thighAngle, float calfAngle){
+//note for some reason max angle for thighAngle is 10 and calfAngle is 20
+//visually, thighs go to about 60 degrees on each side.
+//calfs to go to about 120 degrees on one side.
+	float thighLength = 1.0f;
+	float calfLength = 1.0f;
+	
+	float thighDegree = abs(thighAngle/10.0f)*60.0f;
+	float calfDegree = abs(calfAngle/20.0)*60.f;
+	thighDegree = thighDegree/180.0f*M_PI;
+	calfDegree = calfDegree/180.0f*M_PI;
+	float thigh_adj = thighLength*cosf(thighDegree);	
+	float calf_adj = calfLength*cosf(calfDegree);
+	if(thigh_adj+calf_adj>1.9f){
+		return true;
+	}
+	return false;
+}	
+
 
 void Game::update(float time) {
-
-/*	ball += ball_velocity * time;
-	if (ball.x >= 0.5f * FrameWidth - BallRadius) {
-		ball_velocity.x = -std::abs(ball_velocity.x);
+	body_pos.y += time*(body_velocity.y+time*-4.9f);
+	body_pos.x += time*body_velocity.x;
+	body_velocity.y += time*-4.9;
+	if(body_pos.y<0.03f){
+		body_pos.y = 0.0f;
+		body_velocity.x = 0.0f;
+		body_velocity.y = 0.0f;
 	}
-	if (ball.x <=-0.5f * FrameWidth + BallRadius) {
-		ball_velocity.x = std::abs(ball_velocity.x);
+	if(foot_contact(thighR_angle, calfR_angle)&&body_pos.y<0.001f){
+		body_velocity.x += (calfR_old-calfR_angle)*4.0f;
+		body_velocity.y += 2.0f;
 	}
-	if (ball.y >= 0.5f * FrameHeight - BallRadius) {
-		ball_velocity.y = -std::abs(ball_velocity.y);
-	}
-	if (ball.y <=-0.5f * FrameHeight + BallRadius) {
-		ball_velocity.y = std::abs(ball_velocity.y);
+	if(foot_contact(thighL_angle, calfL_angle)&&body_pos.y<0.001f){
+		body_velocity.x += (calfL_old-calfL_angle)*4.0f;
+		body_velocity.y += 2.0f;
 	}
 
-	auto do_point = [this](glm::vec2 const &pt) {
-		glm::vec2 to = ball - pt;
-		float len2 = glm::dot(to, to);
-		if (len2 > BallRadius * BallRadius) return;
-		//if point is inside ball, make ball velocity outward-going:
-		float d = glm::dot(ball_velocity, to);
-		ball_velocity += ((std::abs(d) - d) / len2) * to;
-	};
-
-	do_point(glm::vec2(paddle.x - 0.5f * PaddleWidth, paddle.y));
-	do_point(glm::vec2(paddle.x + 0.5f * PaddleWidth, paddle.y));
-
-	auto do_edge = [&](glm::vec2 const &a, glm::vec2 const &b) {
-		float along = glm::dot(ball-a, b-a);
-		float max = glm::dot(b-a,b-a);
-		if (along <= 0.0f || along >= max) return;
-		do_point(glm::mix(a,b,along/max));
-	};
-
-	do_edge(glm::vec2(paddle.x + 0.5f * PaddleWidth, paddle.y), glm::vec2(paddle.x - 0.5f * PaddleWidth, paddle.y));
-*/
 }

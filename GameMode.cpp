@@ -28,8 +28,6 @@ Load< GLuint > meshes_for_vertex_color_program(LoadTagDefault, [](){
 		return new GLuint(meshes->make_vao_for_program(vertex_color_program->program));
 		});
 
-Scene::Transform *paddle_transform = nullptr;
-//Scene::Transform *ball_transform = nullptr;
 Scene::Transform *body_transform = nullptr;
 Scene::Transform *bicepL_transform = nullptr;
 Scene::Transform *bicepR_transform = nullptr;
@@ -63,10 +61,6 @@ Load< Scene > scene(LoadTagDefault, [](){
 
 		//look up paddle and ball transforms:
 		for (Scene::Transform *t = ret->first_transform; t != nullptr; t = t->alloc_next) {
-		if (t->name == "Paddle") {
-		if (paddle_transform) throw std::runtime_error("Multiple 'Paddle' transforms in scene.");
-		paddle_transform = t;
-		}
 		if (t->name == "Body") {
 			if (body_transform) throw std::runtime_error("Multiple 'Body' transforms in scene.");
 			body_transform = t;
@@ -86,6 +80,7 @@ Load< Scene > scene(LoadTagDefault, [](){
 		if (t->name == "Forearm_R") {
 			if (forearmR_transform) throw std::runtime_error("Multiple 'Forearm_R' transforms in scene.");
 			forearmR_transform = t;
+			forearmR_transform->position.x-=0.1f;
 		}
 		if (t->name == "Thigh_R") {
 			if (thighR_transform) throw std::runtime_error("Multiple 'Thigh_R' transforms in scene.");
@@ -94,7 +89,8 @@ Load< Scene > scene(LoadTagDefault, [](){
 		if (t->name == "Calf_R") {
 			if (calfR_transform) throw std::runtime_error("Multiple 'Calf_R' transforms in scene.");
 			calfR_transform = t;
-			calfR_transform->position.x += 0.2f;
+			calfR_transform->position.x += 1.5f;
+			calfR_transform->position.y -= 0.8f;
 		}
 		if (t->name == "Thigh_L") {
 			if (thighL_transform) throw std::runtime_error("Multiple 'Thigh_L' transforms in scene.");
@@ -103,11 +99,10 @@ Load< Scene > scene(LoadTagDefault, [](){
 		if (t->name == "Calf_L") {
 			if (calfL_transform) throw std::runtime_error("Multiple 'Calf_L' transforms in scene.");
 			calfL_transform = t;
-			calfL_transform->position.x += 2.0f;
+			calfL_transform->position.x -= 0.2f;
 		}
 
 		}
-		if (!paddle_transform) throw std::runtime_error("No 'Paddle' transform in scene.");
 		if (!body_transform) throw std::runtime_error("No 'Body' transform in scene.");
 		if (!bicepR_transform) throw std::runtime_error("No 'Bicep_R' transform in scene.");
 		if (!bicepL_transform) throw std::runtime_error("No 'Bicep_L' transform in scene.");
@@ -134,6 +129,8 @@ Load< Scene > scene(LoadTagDefault, [](){
 			}
 		}
 		if (!camera) throw std::runtime_error("No 'Camera' camera in scene.");
+		//TODO once theres a bg
+		//camera->transform->set_parent(body_transform, nullptr);
 		return ret;
 });
 
@@ -163,13 +160,13 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		if (evt.key.keysym.scancode == SDL_SCANCODE_P) {
 			controls.p = (evt.type == SDL_KEYDOWN);
 		}
+		if (evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+			//open pause menu on 'ESCAPE':
+			show_pause_menu();
+			return true;
+		}
 	}
 
-	if (evt.type == SDL_MOUSEMOTION) {
-		state.paddle.x = (evt.motion.x - 0.5f * window_size.x) / (0.5f * window_size.x) * Game::FrameWidth;
-		state.paddle.x = std::max(state.paddle.x, -0.5f * Game::FrameWidth + 0.5f * Game::PaddleWidth);
-		state.paddle.x = std::min(state.paddle.x,  0.5f * Game::FrameWidth - 0.5f * Game::PaddleWidth);
-	}
 
 	return false;
 }
@@ -177,13 +174,7 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 glm::quat getQuat(float angle){
 	glm::quat dr = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	float amt = angle*0.1f;
-	if (angle<90 && angle>-90) {
-		dr = glm::angleAxis(amt, glm::vec3(0.0f, 0.0f, 1.0f)) * dr;
-	}
-	// if (dr != glm::quat()) {
-	//         glm::quat &r = cursor_rotation;
-	//         r = glm::normalize(dr * r);
-	// }
+	dr = glm::angleAxis(amt, glm::vec3(0.0f, 0.0f, 1.0f)) * dr;
 	return dr;
 }
 
@@ -198,11 +189,15 @@ void GameMode::update(float elapsed) {
 		state.thighL_angle+=1.0f;
 	}
 	if (controls.o && state.calfR_angle>-20) {
+		state.calfR_old = state.calfR_angle;
+		state.calfL_old = state.calfL_angle;
 		state.calfR_angle-=1.0f;
 		if(state.calfL_angle<0)
 			state.calfL_angle+=1.0f;
         }
 	if (controls.p && state.calfL_angle>-20) {
+		state.calfR_old = state.calfR_angle;
+		state.calfL_old = state.calfL_angle;
 		state.calfL_angle-=1.0f;
 		if(state.calfR_angle<0)
 			state.calfR_angle+=1.0f;
@@ -214,7 +209,8 @@ void GameMode::update(float elapsed) {
 	if (client.connection) {
 		//send game state to server:
 		client.connection.send_raw("s", 1);
-		client.connection.send_raw(&state.paddle.x, sizeof(float));
+		//TODO
+		//client.connection.send_raw(&state.paddle.x, sizeof(float));
 	}
 
 	client.poll([&](Connection *c, Connection::Event event){
@@ -237,9 +233,6 @@ void GameMode::update(float elapsed) {
 	calfR_transform->rotation = getQuat(state.calfR_angle);
 	bicepR_transform->rotation = getQuat(state.thighL_angle);
 	bicepL_transform->rotation = getQuat(state.thighR_angle);
-
-	paddle_transform->position.x = state.paddle.x;
-	paddle_transform->position.y = state.paddle.y;
 }
 
 void GameMode::draw(glm::uvec2 const &drawable_size) {
@@ -265,4 +258,23 @@ void GameMode::draw(glm::uvec2 const &drawable_size) {
 	scene->draw(camera);
 
 	GL_ERRORS();
+}
+
+void GameMode::show_pause_menu() {
+	std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+
+	std::shared_ptr< Mode > game = shared_from_this();
+	menu->background = game;
+
+	menu->choices.emplace_back("PAUSED");
+	menu->choices.emplace_back("RESUME", [game](){
+		Mode::set_current(game);
+	});
+	menu->choices.emplace_back("QUIT", [](){
+		Mode::set_current(nullptr);
+	});
+
+	menu->selected = 1;
+
+	Mode::set_current(menu);
 }

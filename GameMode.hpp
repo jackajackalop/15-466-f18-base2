@@ -38,6 +38,9 @@ struct GameMode : public Mode {
 	//draw is called after update:
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
+	//starts up a 'quit/resume' pause menu:
+	void show_pause_menu();
+
 	//------- game state -------
 	Game state;
 
