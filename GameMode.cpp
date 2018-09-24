@@ -71,7 +71,7 @@ Load< Scene > scene(LoadTagDefault, [](){
         //look up paddle and ball transforms:
         for (Scene::Transform *t = ret->first_transform; t != nullptr; t = t->alloc_next) {
         if (t->name == "Body") {
-            if (body_transform) throw std::runtime_error("Multiple 'Body' transforms in scene.");
+        if (body_transform) throw std::runtime_error("Multiple 'Body' transforms in scene.");
         body_transform = t;
         }
         if (t->name == "Bicep_R") {
@@ -119,12 +119,12 @@ Load< Scene > scene(LoadTagDefault, [](){
         if (t->name == "Bicep_R2") {
             if (bicepR_transform2) throw std::runtime_error("Multiple 'Bicep_R' transforms in scene.");
             bicepR_transform2 = t;
-            bicepR_transform2->position.y -=1.5f;
+            bicepR_transform2->position.y -= 1.5f;
         }
         if (t->name == "Bicep_L2") {
             if (bicepL_transform2) throw std::runtime_error("Multiple 'Bicep_L' transforms in scene.");
             bicepL_transform2 = t;
-            bicepL_transform2->position.y-=1.5f;
+            bicepL_transform2->position.y -= 1.5f;
         }
         if (t->name == "Forearm_L2") {
             if (forearmL_transform2) throw std::runtime_error("Multiple 'Forearm_L' transforms in scene.");
@@ -144,7 +144,7 @@ Load< Scene > scene(LoadTagDefault, [](){
             if (calfR_transform2) throw std::runtime_error("Multiple 'Calf_R' transforms in scene.");
             calfR_transform2 = t;
             calfR_transform2->position.y -= 0.8f;
-            calfR_transform2->position.x += 1.5f;
+            calfR_transform2->position.x +=1.5f;
         }
         if (t->name == "Thigh_L2") {
             if (thighL_transform2) throw std::runtime_error("Multiple 'Thigh_L' transforms in scene.");
@@ -274,32 +274,41 @@ void GameMode::update(float elapsed) {
 
     if (client.connection) {
         //send game state to server:
-        client.connection.send_raw("s", 1);
         //TODO
+        client.connection.send_raw("a", 1);
         client.connection.send_raw(&state.body_pos.x, sizeof(float));
-        //client.connection.send_raw(&state.paddle.x, sizeof(float));
+        client.connection.send_raw("b", 1);
+        client.connection.send_raw(&state.body_pos.y, sizeof(float));
+        client.connection.send_raw("c", 1);
+        client.connection.send_raw(&state.thighR_angle, sizeof(float));
+        client.connection.send_raw("d", 1);
+        client.connection.send_raw(&state.thighL_angle, sizeof(float));
+        client.connection.send_raw("e", 1);
+        client.connection.send_raw(&state.calfR_angle, sizeof(float));
+        client.connection.send_raw("f", 1);
+        client.connection.send_raw(&state.calfL_angle, sizeof(float));
     }
 
     client.poll([&](Connection *c, Connection::Event event){
             if (event == Connection::OnOpen) {
             //probably won't get this.
             } else if (event == Connection::OnClose) {
-                std::cerr << "Lost connection to server." << std::endl;
+            std::cerr << "Lost connection to server." << std::endl;
             } else { assert(event == Connection::OnRecv);}
 
-            if (c->recv_buffer[0] == 's') {
-                if (c->recv_buffer.size() < 1 + sizeof(float)) {
-                    return; //wait for more data
-                } else {
-                //TODO
-                    if(c->ID == 0){
-                    memcpy(&state.body_pos2.x, c->recv_buffer.data()+1, sizeof(float));
-                }
-
+            if (c->recv_buffer[0] == 'a') {
+            if (c->recv_buffer.size() < 1 + sizeof(float)) {
+            return; //wait for more data
+            } else {
+            //TODO
+            memcpy(&state.body_pos2.x,
+                    c->recv_buffer.data()+1,
+                    sizeof(float));
             c->recv_buffer.clear();
             }
-        }
-    });
+            }
+            });
+
 
     //copy game state to scene positions:
     body_transform->position.x = state.body_pos.x;
@@ -310,48 +319,57 @@ void GameMode::update(float elapsed) {
     calfR_transform->rotation = getQuat(state.calfR_angle);
     bicepR_transform->rotation = getQuat(state.thighL_angle);
     bicepL_transform->rotation = getQuat(state.thighR_angle);
-            }
+    body_transform2->position.x = state.body_pos2.x - 2.0f;
+    body_transform2->position.y = state.body_pos2.y + 1.5f;
+    thighR_transform2->rotation = getQuat(state.thighR_angle2);
+    thighL_transform2->rotation = getQuat(state.thighL_angle2);
+    calfL_transform2->rotation = getQuat(state.calfL_angle2);
+    calfR_transform2->rotation = getQuat(state.calfR_angle2);
+    bicepR_transform2->rotation = getQuat(state.thighL_angle2);
+    bicepL_transform2->rotation = getQuat(state.thighR_angle2);
 
-            void GameMode::draw(glm::uvec2 const &drawable_size) {
-                camera->aspect = drawable_size.x / float(drawable_size.y);
+}
 
-                glClearColor(0.25f, 0.0f, 0.5f, 0.0f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void GameMode::draw(glm::uvec2 const &drawable_size) {
+    camera->aspect = drawable_size.x / float(drawable_size.y);
 
-                //set up basic OpenGL state:
-                glEnable(GL_DEPTH_TEST);
-                glEnable(GL_BLEND);
-                glBlendEquation(GL_FUNC_ADD);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClearColor(0.25f, 0.0f, 0.5f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                //set up light positions:
-                glUseProgram(vertex_color_program->program);
+    //set up basic OpenGL state:
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-                glUniform3fv(vertex_color_program->sun_color_vec3, 1, glm::value_ptr(glm::vec3(0.81f, 0.81f, 0.76f)));
-                glUniform3fv(vertex_color_program->sun_direction_vec3, 1, glm::value_ptr(glm::normalize(glm::vec3(-0.2f, 0.2f, 1.0f))));
-                glUniform3fv(vertex_color_program->sky_color_vec3, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.3f)));
-                glUniform3fv(vertex_color_program->sky_direction_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 1.0f, 0.0f)));
+    //set up light positions:
+    glUseProgram(vertex_color_program->program);
 
-                scene->draw(camera);
+    glUniform3fv(vertex_color_program->sun_color_vec3, 1, glm::value_ptr(glm::vec3(0.81f, 0.81f, 0.76f)));
+    glUniform3fv(vertex_color_program->sun_direction_vec3, 1, glm::value_ptr(glm::normalize(glm::vec3(-0.2f, 0.2f, 1.0f))));
+    glUniform3fv(vertex_color_program->sky_color_vec3, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.3f)));
+    glUniform3fv(vertex_color_program->sky_direction_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 1.0f, 0.0f)));
 
-                GL_ERRORS();
-            }
+    scene->draw(camera);
 
-            void GameMode::show_pause_menu() {
-                std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+    GL_ERRORS();
+}
 
-                std::shared_ptr< Mode > game = shared_from_this();
-                menu->background = game;
+void GameMode::show_pause_menu() {
+    std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
 
-                menu->choices.emplace_back("PAUSED");
-                menu->choices.emplace_back("RESUME", [game](){
-                        Mode::set_current(game);
-                        });
-                menu->choices.emplace_back("QUIT", [](){
-                        Mode::set_current(nullptr);
-                        });
+    std::shared_ptr< Mode > game = shared_from_this();
+    menu->background = game;
 
-                menu->selected = 1;
+    menu->choices.emplace_back("PAUSED");
+    menu->choices.emplace_back("RESUME", [game](){
+            Mode::set_current(game);
+            });
+    menu->choices.emplace_back("QUIT", [](){
+            Mode::set_current(nullptr);
+            });
 
-                Mode::set_current(menu);
-            }
+    menu->selected = 1;
+
+    Mode::set_current(menu);
+}
