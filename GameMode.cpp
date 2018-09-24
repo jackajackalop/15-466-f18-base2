@@ -110,17 +110,21 @@ Load< Scene > scene(LoadTagDefault, [](){
             calfL_transform = t;
             calfL_transform->position.x -= 0.2f;
         }
+
+        //PLAYER 2
         if (t->name == "Body2") {
             if (body_transform2) throw std::runtime_error("Multiple 'Body2' transforms in scene.");
-        body_transform2 = t;
+            body_transform2 = t;
         }
         if (t->name == "Bicep_R2") {
             if (bicepR_transform2) throw std::runtime_error("Multiple 'Bicep_R' transforms in scene.");
             bicepR_transform2 = t;
+            bicepR_transform2->position.y -=1.5f;
         }
         if (t->name == "Bicep_L2") {
             if (bicepL_transform2) throw std::runtime_error("Multiple 'Bicep_L' transforms in scene.");
             bicepL_transform2 = t;
+            bicepL_transform2->position.y-=1.5f;
         }
         if (t->name == "Forearm_L2") {
             if (forearmL_transform2) throw std::runtime_error("Multiple 'Forearm_L' transforms in scene.");
@@ -129,11 +133,12 @@ Load< Scene > scene(LoadTagDefault, [](){
         if (t->name == "Forearm_R2") {
             if (forearmR_transform2) throw std::runtime_error("Multiple 'Forearm_R' transforms in scene.");
             forearmR_transform2 = t;
-            forearmR_transform2->position.x-=0.1f;
+            forearmR_transform2->position.x-= 0.1f;
         }
         if (t->name == "Thigh_R2") {
             if (thighR_transform2) throw std::runtime_error("Multiple 'Thigh_R' transforms in scene.");
             thighR_transform2 = t;
+            thighR_transform2->position.y -= 1.5f;
         }
         if (t->name == "Calf_R2") {
             if (calfR_transform2) throw std::runtime_error("Multiple 'Calf_R' transforms in scene.");
@@ -144,6 +149,7 @@ Load< Scene > scene(LoadTagDefault, [](){
         if (t->name == "Thigh_L2") {
             if (thighL_transform2) throw std::runtime_error("Multiple 'Thigh_L' transforms in scene.");
             thighL_transform2 = t;
+            thighL_transform2->position.y -= 1.5f;
         }
         if (t->name == "Calf_L2") {
             if (calfL_transform2) throw std::runtime_error("Multiple 'Calf_L' transforms in scene.");
