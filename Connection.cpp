@@ -71,10 +71,9 @@ void poll_connections(
 #else
 				{
 #endif
-					if(connections.size()<1){
-						std::cout<<connections.size()<<std::endl;
+					if(connections.size()<2){
 						connections.emplace_back();
-						std::cout<<connections.size()<<std::endl;
+						connections.back().ID = connections.size();
 						connections.back().socket = got;
 						std::cerr << "[" << where << "] client connected on " << connections.back().socket << "." << std::endl; //INFO
 						if (on_event) on_event(&connections.back(), Connection::OnOpen);
@@ -89,28 +88,32 @@ void poll_connections(
 		static thread_local char *buffer = new char[BufferSize];
 
 		//process requests:
+		uint32_t counter = 0;
 		for (auto &c : connections) {
+			c.ID = counter;
+			counter++;
 			//only read from valid sockets marked readable:
 			if (c.socket == INVALID_SOCKET || !FD_ISSET(c.socket, &read_fds)) continue;
 
 			ssize_t ret = recv(c.socket, buffer, BufferSize, MSG_DONTWAIT);
-			if (ret < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-				//~no problem~ but no data
-			} else if (ret <= 0 || ret > (ssize_t)BufferSize) {
-				//~problem~ so remove connection
-				if (ret == 0) {
-					std::cerr << "[" << where << "] port closed, disconnecting." << std::endl;
-				} else if (ret < 0) {
-					std::cerr << "[" << where << "] recv() returned error " << errno << "(" << strerror(errno) << "), disconnecting." << std::endl;
-				} else {
-					std::cerr << "[" << where << "] recv() returned strange number of bytes, disconnecting." << std::endl;
+
+				if (ret < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+					//~no problem~ but no data
+				} else if (ret <= 0 || ret > (ssize_t)BufferSize) {
+					//~problem~ so remove connection
+					if (ret == 0) {
+						std::cerr << "[" << where << "] port closed, disconnecting." << std::endl;
+					} else if (ret < 0) {
+						std::cerr << "[" << where << "] recv() returned error " << errno << "(" << strerror(errno) << "), disconnecting." << std::endl;
+					} else {
+						std::cerr << "[" << where << "] recv() returned strange number of bytes, disconnecting." << std::endl;
+					}
+					c.close();
+					if (on_event) on_event(&c, Connection::OnClose);
+				} else { //ret > 0
+					c.recv_buffer.insert(c.recv_buffer.end(), buffer, buffer + ret);
+					if (on_event) on_event(&c, Connection::OnRecv);
 				}
-				c.close();
-				if (on_event) on_event(&c, Connection::OnClose);
-			} else { //ret > 0
-				c.recv_buffer.insert(c.recv_buffer.end(), buffer, buffer + ret);
-				if (on_event) on_event(&c, Connection::OnRecv);
-			}
 		}
 
 		//process responses:
