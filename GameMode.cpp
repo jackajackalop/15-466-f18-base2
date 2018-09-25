@@ -195,13 +195,13 @@ Load< Scene > scene(LoadTagDefault, [](){
         }
         if (!camera) throw std::runtime_error("No 'Camera' camera in scene.");
         //TODO once theres a bg
-        //camera->transform->set_parent(body_transform, nullptr);
         return ret;
 });
 
 GameMode::GameMode(Client &client_) : client(client_) {
     //TODO
     client.connection.send_raw("h", 1); //send a 'hello' to the server
+
 }
 
 GameMode::~GameMode() {
@@ -425,6 +425,12 @@ void GameMode::update(float elapsed) {
     calfR_transform2->rotation = getQuat(state.calfR_angle2);
     bicepR_transform2->rotation = getQuat(state.thighL_angle2);
     bicepL_transform2->rotation = getQuat(state.thighR_angle2);
+    if(playerNum == '0')
+        camera->transform->position = body_transform->position;
+    else
+        camera->transform->position = body_transform2->position;
+    camera->transform->position.z += 30.0f;
+
 }
 
 void GameMode::draw(glm::uvec2 const &drawable_size) {
