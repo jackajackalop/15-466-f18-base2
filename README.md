@@ -1,11 +1,10 @@
 # Game Information
-(Note: fill in this portion with information about your game.)
 
-Title: (TODO: your game's title)
+Title: QWOP Kart
 
-Author: (TODO: your name)
+Author: Yixin He
 
-Design Document: [TODO: name of design document](TODO: link to design document)
+Design Document: [QWOP Kart Design Document](http://graphics.cs.cmu.edu/courses/15-466-f18/game2-designs/yixinh/)
 
 Screen Shot:
 
@@ -13,67 +12,26 @@ Screen Shot:
 
 How To Play:
 
-TODO: describe the controls and (if needed) goals/strategy.
+Use Q to flex your right thigh! Use W to flex your left thigh! Use P to flex your left calf! Use O to flex your right calf! Run into an item to use it! Attempt to jump over it to not use it!
+
+Banana peels will make you go back, star makes you go forward, and shells make you die.
+
+
 
 Changes From The Design Document:
 
-TODO: what did you need to add/remove/modify from the original design? Why?
+The idea of an inventory was done away with for ease of implementation because I ran out of time. The controls were changed a bit to match more with the original QWOP.
+
+Otherwise, nothing explicitly mentioned in the design docs were removed. The limbs are much easier to move than the original QWOP but a) I *technically* did not say I would implement that b)would staying up past 4 am :')
 
 Good / Bad / Ugly Code:
 
-TODO: provide examples of code you wrote from this project that you think is good (elegant, simple, useful), bad (hack-y, brittle, unreadable), and ugly (particularly inelegant). Provide a sentence or two of justification for the examples.
+Good: I'm not sure if it's "good" code, but my QWOPs synched up pretty painlessly. Networking didn't cause me too many headaches.
 
-# Using This Base Code
+Bad: The way QWOP runs is a bit hacky. The way contact with ground or objects is determed is also very imprecise.
 
-Before you dive into the code, it helps to understand the overall structure of this repository.
-- Files you should read and/or edit:
-    - ```main.cpp``` creates the game window and contains the main loop. You should read through this file to understand what it's doing, but you shouldn't need to change things (other than window title, size, and maybe the initial Mode).
-    - ```server.cpp``` creates a basic server.
-    - ```GameMode.*pp``` declaration+definition for the GameMode, a basic scene-based game mode.
-    - ```meshes/export-meshes.py``` exports meshes from a .blend file into a format usable by our game runtime.
-    - ```meshes/export-walkmeshes.py``` exports meshes from a given layer of a .blend file into a format usable by the WalkMeshes loading code.
-    - ```meshes/export-scene.py``` exports the transform hierarchy of a blender scene to a file.
-	- ```Connection.*pp``` networking code.
-    - ```Jamfile``` responsible for telling FTJam how to build the project. If you add any additional .cpp files or want to change the name of your runtime executable you will need to modify this.
-    - ```.gitignore``` ignores the ```objs/``` directory and the generated executable file. You will need to change it if your executable name changes. (If you find yourself changing it to ignore, e.g., your editor's swap files you should probably, instead be investigating making this change in the global git configuration.)
-- Files you should read the header for (and use):
-	- ```Sound.*pp``` spatial sound code.
-    - ```WalkMesh.*pp``` code to load and walk on walkmeshes.
-    - ```MenuMode.hpp``` presents a menu with configurable choices. Can optionally display another mode in the background.
-    - ```Scene.hpp``` scene graph implementation, including loading code.
-    - ```Mode.hpp``` base class for modes (things that recieve events and draw).
-    - ```Load.hpp``` asset loading system. Very useful for OpenGL assets.
-    - ```MeshBuffer.hpp``` code to load mesh data in a variety of formats (and create vertex array objects to bind it to program attributes).
-    - ```data_path.hpp``` contains a helper function that allows you to specify paths relative to the executable (instead of the current working directory). Very useful when loading assets.
-    - ```draw_text.hpp``` draws text (limited to capital letters + *) to the screen.
-    - ```compile_program.hpp``` compiles OpenGL shader programs.
-    - ```load_save_png.hpp``` load and save PNG images.
-- Files you probably don't need to read or edit:
-    - ```GL.hpp``` includes OpenGL prototypes without the namespace pollution of (e.g.) SDL's OpenGL header. It makes use of ```glcorearb.h``` and ```gl_shims.*pp``` to make this happen.
-    - ```make-gl-shims.py``` does what it says on the tin. Included in case you are curious. You won't need to run it.
-    - ```read_chunk.hpp``` contains a function that reads a vector of structures prefixed by a magic number. It's surprising how many simple file formats you can create that only require such a function to access.
+Ugly: The lack of particle dynamics. Despite my excuses above, I definitely wanted to try this but it did not happen. Also ugly is that I'm not sure how to use blender, so positioning objects in my game (like different limbs) is very hacky and magic-number-y.
 
-## Asset Build Instructions
-
-The ```meshes/export-meshes.py``` script can write mesh data including a variety of attributes (e.g., *p*ositions, *n*ormals, *c*olors, *t*excoords) from a selected layer of a blend file:
-
-```
-blender --background --python meshes/export-meshes.py -- meshes/crates.blend:1 dist/crates.pnc
-```
-
-The ```meshes/export-scene.py``` script can write the transformation hierarchy of the scene from a selected layer of a blend file, and includes references to meshes (by name):
-
-```
-blender --background --python meshes/export-scene.py -- meshes/crates.blend:1 dist/crates.scene
-```
-
-The ```meshes/export-walkmeshes.py``` script can writes vertices, normals, and triangle indicies of all meshes on a selected layer of a .blend file:
-
-```
-blender --background --python meshes/export-walkmeshes.py -- meshes/crates.blend:3 dist/crates.walkmesh
-```
-
-There is a Makefile in the ```meshes``` directory with some example commands of this sort in it as well.
 
 ## Runtime Build Instructions
 

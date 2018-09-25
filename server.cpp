@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
         server.poll([&](Connection *c, Connection::Event evt){
                 if (evt == Connection::OnOpen) {
                 } else if (evt == Connection::OnClose) {
+                    throw std::runtime_error("Player has exited. A TWO player game cannot go on with a single person");
                 } else { assert(evt == Connection::OnRecv);
                 if (c->recv_buffer[0] == 'h') {
                     c->recv_buffer.erase(c->recv_buffer.begin(),
