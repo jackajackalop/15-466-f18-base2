@@ -41,10 +41,14 @@ struct GameMode : public Mode {
 
 	//starts up a 'quit/resume' pause menu:
 	void show_pause_menu();
+	void show_win();
+	void show_lose();
 
 	//------- game state -------
 	Game state;
-
+    float total_time = 0.0f;
+    bool player1win = false;
+    bool player2win = false;
 	//------ networking ------
 	Client &client; //client object; manages connection to server.
 };

@@ -162,6 +162,8 @@ Load< Scene > scene(LoadTagDefault, [](){
             calfL_transform2 = t;
             calfL_transform2->position.x -= 0.2f;
         }
+
+        //BACKGROUND
         if(t->name == "bg"){
             if(bg) throw std::runtime_error("Multiple 'bg' transforms in scene.");
             bg = t;
@@ -171,7 +173,14 @@ Load< Scene > scene(LoadTagDefault, [](){
             ground = t;
         }
 
+        //ITEMS
+        if(t->name == "banana"){
+            if(banana) throw std::runtime_error("Multiple 'banana' transforms in scene.");
+            banana = t;
+            banana->position.x = -9999.0f;
         }
+        }
+
         if (!body_transform) throw std::runtime_error("No 'Body' transform in scene.");
         if (!bicepR_transform) throw std::runtime_error("No 'Bicep_R' transform in scene.");
         if (!bicepL_transform) throw std::runtime_error("No 'Bicep_L' transform in scene.");
@@ -259,6 +268,7 @@ glm::quat getQuat(float angle){
 
 
 void GameMode::update(float elapsed) {
+
     if(playerNum == '0'){
         if (controls.q && state.thighR_angle<10) {
             state.thighR_angle+=1.0f;
@@ -308,6 +318,24 @@ void GameMode::update(float elapsed) {
 
     }
 
+    //TODO
+    if(std::abs(state.body_pos.x - banana->position.x) <0.4f
+                && state.body_pos.y <0.3f){
+        player1win = false;
+        player2win = true;
+    }else if(std::abs(state.body_pos2.x - banana->position.x) <0.4f
+            && state.body_pos2.y <0.3f){
+        player1win = true;
+        player2win = false;
+    }
+
+    if(player1win || player2win){
+        if((player1win&&playerNum == '0') || (player2win&&playerNum=='1'))
+            show_win();
+        else
+            show_lose();
+    }
+
     state.update(elapsed, playerNum);
 
     if (client.connection) {
@@ -348,11 +376,19 @@ void GameMode::update(float elapsed) {
             c->recv_buffer.erase(c->recv_buffer.begin(),
                     c->recv_buffer.begin() + 2);
             }
+            }else if (c->recv_buffer[0] == 'i'){
+                if(c->recv_buffer.size() < 1 + sizeof(float)){
+                    return;
+                }else{
+                    memcpy(&banana->position.x, c->recv_buffer.data()+1,
+                            sizeof(float));
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
+                            c->recv_buffer.begin() + 1 + sizeof(float));
+                }
             }else if (c->recv_buffer[0] == 'a') {
             if (c->recv_buffer.size() < 1 + sizeof(float)) {
             return; //wait for more data
             } else {
-            //TODO
             if(playerNum == '0'){
                 memcpy(&state.body_pos2.x,
                         c->recv_buffer.data()+1,
@@ -448,7 +484,7 @@ void GameMode::update(float elapsed) {
         ground->position.x = body_transform2->position.x;
     }
     camera->transform->position.z += 30.0f;
-    camera->transform->position.y -= 1.0f;
+    camera->transform->position.y -= 0.5f;
 
 }
 
@@ -487,6 +523,36 @@ void GameMode::show_pause_menu() {
     menu->choices.emplace_back("RESUME", [game](){
             Mode::set_current(game);
             });
+    menu->choices.emplace_back("QUIT", [](){
+            Mode::set_current(nullptr);
+            });
+
+    menu->selected = 1;
+
+    Mode::set_current(menu);
+}
+void GameMode::show_lose() {
+    std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+
+    std::shared_ptr< Mode > game = shared_from_this();
+    menu->background = game;
+
+    menu->choices.emplace_back("YOU DIED. LOSER");
+    menu->choices.emplace_back("QUIT", [](){
+            Mode::set_current(nullptr);
+            });
+
+    menu->selected = 1;
+
+    Mode::set_current(menu);
+}
+void GameMode::show_win() {
+    std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+
+    std::shared_ptr< Mode > game = shared_from_this();
+    menu->background = game;
+
+    menu->choices.emplace_back("FOE DIED SO YOU WIN");
     menu->choices.emplace_back("QUIT", [](){
             Mode::set_current(nullptr);
             });

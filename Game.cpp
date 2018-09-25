@@ -41,6 +41,7 @@ void Game::update(float time, char playerNum) {
             body_velocity.x += (calfL_old-calfL_angle)*4.0f;
             body_velocity.y += 2.0f;
         }
+        body_velocity.x *= (body_velocity.x<0 ? -1.0f : 1.0f);
     }else{
         body_pos2.y += time*(body_velocity2.y+time*-4.9f);
         body_pos2.x += time*body_velocity2.x;
@@ -58,6 +59,7 @@ void Game::update(float time, char playerNum) {
             body_velocity2.x += (calfL_old2-calfL_angle2)*4.0f;
             body_velocity2.y += 2.0f;
         }
+        body_velocity2.x *= (body_velocity2.x<0 ? -1.0f : 1.0f);
     }
 
 }

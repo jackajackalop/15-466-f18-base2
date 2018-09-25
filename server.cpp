@@ -13,6 +13,10 @@ int main(int argc, char **argv) {
 
     Server server(argv[1]);
     int players = 0;
+    int elapsed = 0;
+    bool item = false;
+    float item_pos = 0.0f;
+    std::vector <bool> sent = {false, false};
 
     Game state1;
     Game state2;
@@ -71,14 +75,40 @@ int main(int argc, char **argv) {
                         }
                     }
                 }
+                if(item){
+                    if(c->ID == 0){
+                        if(!sent[0]){
+                           c->send_raw("i", 1);
+                           c->send_raw(&item_pos, sizeof(float));
+                           sent[0] = true;
+                        }
+                    }else{
+                        if(!sent[1]){
+                            c->send_raw("i", 1);
+                            c->send_raw(&item_pos, sizeof(float));
+                            sent[1] = true;
+                        }
+                    }
+                    if(sent[0] && sent[1]){
+                        item = false;
+                        sent[0] = false;
+                        sent[1] = false;
+                    }
                 }
+            }
         }, 0.01);
         //every second or so, dump the current paddle position:
         static auto then = std::chrono::steady_clock::now();
         auto now = std::chrono::steady_clock::now();
         if (now > then + std::chrono::seconds(1)) {
+            elapsed++;
+            if(!item && elapsed%25==0){
+                item = true;
+                item_pos = std::max(state1.body_pos.x, state2.body_pos.x)
+                    +15.0f;
+                elapsed++;
+            }
             then = now;
-            //TODO
             std::cout<<"Body pos of player 1: " <<state1.body_pos.x<<std::endl;
             std::cout<<"Body pos of player 2: " <<state2.body_pos.x<<std::endl;
         }
