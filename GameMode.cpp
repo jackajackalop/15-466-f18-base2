@@ -48,9 +48,9 @@ Scene::Transform *thighR_transform2 = nullptr;
 Scene::Transform *calfL_transform2 = nullptr;
 Scene::Transform *calfR_transform2 = nullptr;
 
-Scene::Transform *star = nullptr;
 Scene::Transform *shell = nullptr;
 Scene::Transform *banana = nullptr;
+Scene::Transform *star  = nullptr;
 
 Scene::Transform *ground = nullptr;
 Scene::Transform *bg = nullptr;
@@ -178,6 +178,15 @@ Load< Scene > scene(LoadTagDefault, [](){
             if(banana) throw std::runtime_error("Multiple 'banana' transforms in scene.");
             banana = t;
             banana->position.x = -9999.0f;
+        }
+        if(t->name == "star"){
+            if(star) throw std::runtime_error("Multiple 'star' transforms in scene.");
+            star = t;
+            star->position.x = -9999.0f;
+        }
+        if(t->name == "shell"){
+            shell = t;
+            shell->position.x = -9999.0f;
         }
         }
 
@@ -318,24 +327,6 @@ void GameMode::update(float elapsed) {
 
     }
 
-    //TODO
-    if(std::abs(state.body_pos.x - banana->position.x) <0.4f
-                && state.body_pos.y <0.3f){
-        player1win = false;
-        player2win = true;
-    }else if(std::abs(state.body_pos2.x - banana->position.x) <0.4f
-            && state.body_pos2.y <0.3f){
-        player1win = true;
-        player2win = false;
-    }
-
-    if(player1win || player2win){
-        if((player1win&&playerNum == '0') || (player2win&&playerNum=='1'))
-            show_win();
-        else
-            show_lose();
-    }
-
     state.update(elapsed, playerNum);
 
     if (client.connection) {
@@ -380,8 +371,17 @@ void GameMode::update(float elapsed) {
                 if(c->recv_buffer.size() < 1 + sizeof(float)){
                     return;
                 }else{
-                    memcpy(&banana->position.x, c->recv_buffer.data()+1,
+                    uint rand = std::rand()%10+1;
+                    if(rand<4){
+                        memcpy(&banana->position.x, c->recv_buffer.data()+1,
                             sizeof(float));
+                    }else if(rand<7){
+                        memcpy(&star->position.x, c->recv_buffer.data()+1,
+                            sizeof(float));
+                    }else{
+                        memcpy(&shell->position.x, c->recv_buffer.data()+1,
+                            sizeof(float));
+                    }
                     c->recv_buffer.erase(c->recv_buffer.begin(),
                             c->recv_buffer.begin() + 1 + sizeof(float));
                 }
@@ -486,6 +486,46 @@ void GameMode::update(float elapsed) {
     camera->transform->position.z += 30.0f;
     camera->transform->position.y -= 0.5f;
 
+    //TODO
+    //shell handling
+    if(std::abs(state.body_pos.x - shell->position.x) <0.4f
+                && state.body_pos.y <0.3f){
+        player1win = false;
+        player2win = true;
+    }else if(std::abs(state.body_pos2.x - shell->position.x) <0.4f
+            && state.body_pos2.y <0.3f){
+        player1win = true;
+        player2win = false;
+    }
+    //star handling
+    if(std::abs(state.body_pos.x - star->position.x) <0.4f
+                && state.body_pos.y <0.4f){
+        state.body_velocity.x = 20.0f;
+        state.body_velocity.y = 5.0f;
+    }else if(std::abs(state.body_pos2.x - star->position.x) <0.4f
+            && state.body_pos2.y <0.4f){
+        state.body_velocity2.x = 20.0f;
+        state.body_velocity2.y = 5.0f;
+    }
+    //banana handling
+    if(std::abs(state.body_pos.x - banana->position.x) <0.4f
+                && state.body_pos.y <0.4f){
+        state.body_velocity.x = -20.0f;
+        state.body_velocity.y = 5.0f;
+    }else if(std::abs(state.body_pos2.x - banana->position.x) <0.4f
+            && state.body_pos2.y <0.4f){
+        state.body_velocity2.x = -20.0f;
+        state.body_velocity2.y = 5.0f;
+    }
+
+    if(player1win || player2win){
+        if((player1win&&playerNum == '0') || (player2win&&playerNum=='1'))
+            show_win();
+        else
+            show_lose();
+    }
+
+
 }
 
 void GameMode::draw(glm::uvec2 const &drawable_size) {
@@ -537,7 +577,7 @@ void GameMode::show_lose() {
     std::shared_ptr< Mode > game = shared_from_this();
     menu->background = game;
 
-    menu->choices.emplace_back("YOU DIED. LOSER");
+    menu->choices.emplace_back("YOU DIED LOSER");
     menu->choices.emplace_back("QUIT", [](){
             Mode::set_current(nullptr);
             });

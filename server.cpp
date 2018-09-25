@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
     int elapsed = 0;
     bool item = false;
     float item_pos = 0.0f;
+
     std::vector <bool> sent = {false, false};
 
     Game state1;
