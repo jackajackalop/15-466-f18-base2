@@ -21,7 +21,8 @@ struct Game {
 	float calfL_old2 = 0.0f;
 
 	glm::vec2 body_velocity = glm::vec2(0.0f, 0.0f);
+	glm::vec2 body_velocity2 = glm::vec2(0.0f, 0.0f);
 
-	void update(float time);
+	void update(float time, char playerNum);
 
 };

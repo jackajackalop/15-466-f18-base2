@@ -24,13 +24,14 @@ struct GameMode : public Mode {
 	//The function should return 'true' if it handled the event.
 	virtual bool handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) override;
 
+    char playerNum;
 	struct {
                 bool q = false;
                 bool w = false;
                 bool o = false;
                 bool p = false;
         } controls;
-	
+
 
 	//update is called at the start of a new frame, after events are handled:
 	virtual void update(float elapsed) override;

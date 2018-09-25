@@ -246,42 +246,78 @@ glm::quat getQuat(float angle){
 
 
 void GameMode::update(float elapsed) {
-    if (controls.q && state.thighR_angle<10) {
-        state.thighR_angle+=1.0f;
-        state.thighL_angle-=1.0f;
-    }
-    if (controls.w && state.thighL_angle<10) {
-        state.thighR_angle-=1.0f;
-        state.thighL_angle+=1.0f;
-    }
-    if (controls.o && state.calfR_angle>-20) {
-        state.calfR_old = state.calfR_angle;
-        state.calfL_old = state.calfL_angle;
-        state.calfR_angle-=1.0f;
-        if(state.calfL_angle<0)
-            state.calfL_angle+=1.0f;
-    }
-    if (controls.p && state.calfL_angle>-20) {
-        state.calfR_old = state.calfR_angle;
-        state.calfL_old = state.calfL_angle;
-        state.calfL_angle-=1.0f;
-        if(state.calfR_angle<0)
-            state.calfR_angle+=1.0f;
+    if(playerNum == '0'){
+        if (controls.q && state.thighR_angle<10) {
+            state.thighR_angle+=1.0f;
+            state.thighL_angle-=1.0f;
+        }
+        if (controls.w && state.thighL_angle<10) {
+            state.thighR_angle-=1.0f;
+            state.thighL_angle+=1.0f;
+        }
+        if (controls.o && state.calfR_angle>-20) {
+            state.calfR_old = state.calfR_angle;
+            state.calfL_old = state.calfL_angle;
+            state.calfR_angle-=1.0f;
+            if(state.calfL_angle<0)
+                state.calfL_angle+=1.0f;
+        }
+        if (controls.p && state.calfL_angle>-20) {
+            state.calfR_old = state.calfR_angle;
+            state.calfL_old = state.calfL_angle;
+            state.calfL_angle-=1.0f;
+            if(state.calfR_angle<0)
+                state.calfR_angle+=1.0f;
+        }
+    }else{
+        if (controls.q && state.thighR_angle2<10) {
+            state.thighR_angle2+=1.0f;
+            state.thighL_angle2-=1.0f;
+        }
+        if (controls.w && state.thighL_angle2<10) {
+            state.thighR_angle2-=1.0f;
+            state.thighL_angle2+=1.0f;
+        }
+        if (controls.o && state.calfR_angle2>-20) {
+            state.calfR_old2 = state.calfR_angle2;
+            state.calfL_old2 = state.calfL_angle2;
+            state.calfR_angle2-=1.0f;
+            if(state.calfL_angle2<0)
+                state.calfL_angle2+=1.0f;
+        }
+        if (controls.p && state.calfL_angle2>-20) {
+            state.calfR_old2 = state.calfR_angle2;
+            state.calfL_old2 = state.calfL_angle2;
+            state.calfL_angle2-=1.0f;
+            if(state.calfR_angle2<0)
+                state.calfR_angle2+=1.0f;
+        }
+
     }
 
-
-    state.update(elapsed);
+    state.update(elapsed, playerNum);
 
     if (client.connection) {
         //send game state to server:
         //TODO turns out its sending other things thats breaking it
-        client.connection.send_raw("a", 1);
-        client.connection.send_raw(&state.body_pos.x, sizeof(float));
-        client.connection.send_raw(&state.body_pos.y, sizeof(float));
-        client.connection.send_raw(&state.thighR_angle, sizeof(float));
-        client.connection.send_raw(&state.thighL_angle, sizeof(float));
-        client.connection.send_raw(&state.calfR_angle, sizeof(float));
-        client.connection.send_raw(&state.calfL_angle, sizeof(float));
+        if(playerNum == '0'){
+            client.connection.send_raw("a", 1);
+            client.connection.send_raw(&state.body_pos.x, sizeof(float));
+            client.connection.send_raw(&state.body_pos.y, sizeof(float));
+            client.connection.send_raw(&state.thighR_angle, sizeof(float));
+            client.connection.send_raw(&state.thighL_angle, sizeof(float));
+            client.connection.send_raw(&state.calfR_angle, sizeof(float));
+            client.connection.send_raw(&state.calfL_angle, sizeof(float));
+        }else{
+            client.connection.send_raw("a", 1);
+            client.connection.send_raw(&state.body_pos2.x, sizeof(float));
+            client.connection.send_raw(&state.body_pos2.y, sizeof(float));
+            client.connection.send_raw(&state.thighR_angle2, sizeof(float));
+            client.connection.send_raw(&state.thighL_angle2, sizeof(float));
+            client.connection.send_raw(&state.calfR_angle2, sizeof(float));
+            client.connection.send_raw(&state.calfL_angle2, sizeof(float));
+
+        }
     }
 
     client.poll([&](Connection *c, Connection::Event event){
@@ -291,46 +327,86 @@ void GameMode::update(float elapsed) {
             std::cerr << "Lost connection to server." << std::endl;
             } else { assert(event == Connection::OnRecv);}
 
-            if (c->recv_buffer[0] == 'a') {
-                if (c->recv_buffer.size() < 1 + sizeof(float)) {
-                    return; //wait for more data
-                } else {
-                //TODO
-                    memcpy(&state.body_pos2.x,
+            if(c->recv_buffer[0] == 'p'){
+            if(c->recv_buffer.size() < 2){
+            return;
+            }else{
+            memcpy(&playerNum, c->recv_buffer.data()+1, 1);
+            c->recv_buffer.erase(c->recv_buffer.begin(),
+                    c->recv_buffer.begin() + 2);
+            }
+            }else if (c->recv_buffer[0] == 'a') {
+            if (c->recv_buffer.size() < 1 + sizeof(float)) {
+            return; //wait for more data
+            } else {
+            //TODO
+            if(playerNum == '0'){
+                memcpy(&state.body_pos2.x,
                         c->recv_buffer.data()+1,
                         sizeof(float));
-                    c->recv_buffer.erase(c->recv_buffer.begin(),
-                            c->recv_buffer.begin() + 1 + sizeof(float));
-                    memcpy(&state.body_pos2.y,
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + 1 + sizeof(float));
+                memcpy(&state.body_pos2.y,
                         c->recv_buffer.data(),
                         sizeof(float));
-                    c->recv_buffer.erase(c->recv_buffer.begin(),
-                            c->recv_buffer.begin() + sizeof(float));
-                    memcpy(&state.thighR_angle2,
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.thighR_angle2,
                         c->recv_buffer.data(),
                         sizeof(float));
-                    c->recv_buffer.erase(c->recv_buffer.begin(),
-                            c->recv_buffer.begin() + sizeof(float));
-                    memcpy(&state.thighL_angle2,
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.thighL_angle2,
                         c->recv_buffer.data(),
                         sizeof(float));
-                    c->recv_buffer.erase(c->recv_buffer.begin(),
-                            c->recv_buffer.begin() + sizeof(float));
-                    memcpy(&state.calfR_angle2,
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.calfR_angle2,
                         c->recv_buffer.data(),
                         sizeof(float));
-                    c->recv_buffer.erase(c->recv_buffer.begin(),
-                            c->recv_buffer.begin() + sizeof(float));
-                    memcpy(&state.calfL_angle2,
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.calfL_angle2,
                         c->recv_buffer.data(),
                         sizeof(float));
-                    c->recv_buffer.erase(c->recv_buffer.begin(),
-                            c->recv_buffer.begin() + sizeof(float));
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+            }else{
+                memcpy(&state.body_pos.x,
+                        c->recv_buffer.data()+1,
+                        sizeof(float));
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + 1 + sizeof(float));
+                memcpy(&state.body_pos.y,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.thighR_angle,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.thighL_angle,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.calfR_angle,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
+                memcpy(&state.calfL_angle,
+                        c->recv_buffer.data(),
+                        sizeof(float));
+                c->recv_buffer.erase(c->recv_buffer.begin(),
+                        c->recv_buffer.begin() + sizeof(float));
 
-                }
+            }
+            }
             }
     });
-
 
     //copy game state to scene positions:
     body_transform->position.x = state.body_pos.x;
@@ -349,7 +425,6 @@ void GameMode::update(float elapsed) {
     calfR_transform2->rotation = getQuat(state.calfR_angle2);
     bicepR_transform2->rotation = getQuat(state.thighL_angle2);
     bicepL_transform2->rotation = getQuat(state.thighR_angle2);
-
 }
 
 void GameMode::draw(glm::uvec2 const &drawable_size) {

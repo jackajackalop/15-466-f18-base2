@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
     }
 
     Server server(argv[1]);
+    int players = 0;
 
     Game state1;
     Game state2;
@@ -24,9 +25,16 @@ int main(int argc, char **argv) {
                 } else if (evt == Connection::OnClose) {
                 } else { assert(evt == Connection::OnRecv);
                 if (c->recv_buffer[0] == 'h') {
-                c->recv_buffer.erase(c->recv_buffer.begin(),
+                    c->recv_buffer.erase(c->recv_buffer.begin(),
                         c->recv_buffer.begin() + 1);
-                std::cout << c << ": Got hello." << std::endl;
+                    if(players == 0)
+                        c->send_raw("p0", 2);
+                    else if(players == 1)
+                        c->send_raw("p1", 2);
+                    else
+                        std::cout<<"Again, this is a two player game"<<std::endl;
+                    players++;
+                    std::cout << c << ": Got hello." << std::endl;
                 }else if (c->recv_buffer [0] == 'a'){
                     if (c->recv_buffer.size() < 1 + sizeof(float))
                         return; //wait for more data
@@ -61,8 +69,6 @@ int main(int argc, char **argv) {
                             c->send_raw(&state1.calfR_angle, sizeof(float));
                             c->send_raw(&state1.calfL_angle, sizeof(float));
                         }
-
-
                     }
                 }
                 }
