@@ -48,8 +48,14 @@ Scene::Transform *thighR_transform2 = nullptr;
 Scene::Transform *calfL_transform2 = nullptr;
 Scene::Transform *calfR_transform2 = nullptr;
 
+Scene::Transform *star = nullptr;
+Scene::Transform *shell = nullptr;
+Scene::Transform *banana = nullptr;
 
+Scene::Transform *ground = nullptr;
+Scene::Transform *bg = nullptr;
 Scene::Camera *camera = nullptr;
+
 
 Load< Scene > scene(LoadTagDefault, [](){
         Scene *ret = new Scene;
@@ -156,6 +162,14 @@ Load< Scene > scene(LoadTagDefault, [](){
             calfL_transform2 = t;
             calfL_transform2->position.x -= 0.2f;
         }
+        if(t->name == "bg"){
+            if(bg) throw std::runtime_error("Multiple 'bg' transforms in scene.");
+            bg = t;
+        }
+        if(t->name == "ground"){
+            if(ground) throw std::runtime_error("Multiple 'ground' transforms in scene.");
+            ground = t;
+        }
 
         }
         if (!body_transform) throw std::runtime_error("No 'Body' transform in scene.");
@@ -185,7 +199,6 @@ Load< Scene > scene(LoadTagDefault, [](){
         calfR_transform2->set_parent(thighR_transform2, nullptr);
         thighL_transform2->set_parent(body_transform2, nullptr);
         calfL_transform2->set_parent(thighL_transform2, nullptr);
-
         //look up the camera:
         for (Scene::Camera *c = ret->first_camera; c != nullptr; c = c->alloc_next) {
             if (c->transform->name == "Camera") {
@@ -425,11 +438,17 @@ void GameMode::update(float elapsed) {
     calfR_transform2->rotation = getQuat(state.calfR_angle2);
     bicepR_transform2->rotation = getQuat(state.thighL_angle2);
     bicepL_transform2->rotation = getQuat(state.thighR_angle2);
-    if(playerNum == '0')
+    if(playerNum == '0'){
         camera->transform->position = body_transform->position;
-    else
+        bg->position.x = body_transform->position.x;
+        ground->position.x = body_transform->position.x;
+    }else{
         camera->transform->position = body_transform2->position;
+        bg->position.x = body_transform2->position.x;
+        ground->position.x = body_transform2->position.x;
+    }
     camera->transform->position.z += 30.0f;
+    camera->transform->position.y -= 1.0f;
 
 }
 
